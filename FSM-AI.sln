@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FSM-AI", "FSM-AI\FSM-AI.csproj", "{FE3B5E0C-C598-46A7-9523-865A8636C12E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FE3B5E0C-C598-46A7-9523-865A8636C12E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE3B5E0C-C598-46A7-9523-865A8636C12E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE3B5E0C-C598-46A7-9523-865A8636C12E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE3B5E0C-C598-46A7-9523-865A8636C12E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5BFA020D-89A4-410E-947C-96171775B6D8}
+	EndGlobalSection
+EndGlobal
