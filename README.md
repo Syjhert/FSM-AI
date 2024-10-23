@@ -12,12 +12,13 @@ Gameplay Mechanics:
   - Spawned: The state right after their spawn, does nothing
   - Idle: When the enemy does not detect the player YET. Moves randomly or does not move at all per turn.
   - Pursuing: When the enemy detects the player in its 8-cell ranged Line of Sight and is not obstructed by a wall. It will try to move towards the player but can stumble (not move) which gives the player a chance to run away.
-  - Attacking: The enemy will attack this turn and shades the cells around its attack range just like the player but now with a movement cost of 2 or less (lesser range than player).
+  - Attacking: The enemy will attack this turn and shades the cells around its attack range just like the player but now with a movement cost of 2 or less (lesser range than the player).
   - Dead: The enemy's health drops to zero and cannot change to other states.
 
-Project Information:
-- The project is coded in C# Windows Form in Visual Studio
-- The arena is made using DataGridView, clearing the contents of the grid per turn (or other specific instances).
+Other Information:
+- The project is coded in C# Windows Form in Visual Studio.
+- The arena is made using DataGridView and for each turn (or other specific instances) the game clears the content of the grid and replaces it with new content.
 - The form shows the enemy's state after the result of the previous turn.
 - The game's update function order is: enemy state change > enemy move > player move > game-over screen check > enemy damage check > player damage check
 - The enemy's state changes first per turn but the damage check happens last. This results in the enemy making a move before it has the Dead state despite having zero health on that turn.
+- The form has a checkbox in the bottom left to show the enemy Line of Sight (detection range for Pursuing State).
