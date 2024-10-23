@@ -63,7 +63,7 @@ namespace FSM_AI
                 initialCoords = new Coord(
                     rand.Next(width), rand.Next(height)
                 );
-            } while (map[initialCoords.y, initialCoords.x] == "X");
+            } while (map[initialCoords.y, initialCoords.x].Contains('X'));
 
             return new Player(initialCoords, 5);
         }
@@ -76,7 +76,7 @@ namespace FSM_AI
                 initialCoords = new Coord(
                     rand.Next(width), rand.Next(height)
                 );
-            } while (map[initialCoords.y, initialCoords.x] == "X");
+            } while (map[initialCoords.y, initialCoords.x].Contains('X') || player.coord.Equals(initialCoords));
 
             return new Enemy(initialCoords, 5, LoS_checkbox.Checked);
         }
@@ -206,9 +206,10 @@ namespace FSM_AI
                 enemy = initializeEnemy();
             }
 
+
             if (enemy != null)
             {
-                enemy.makeAction(map, player);
+                if ( moveCount > 3) enemy.makeAction(map, player);
                 state_label.Text = enemy.getState();
             }
             if (player.health > 0)
@@ -217,7 +218,7 @@ namespace FSM_AI
                 gameover_label.Text = "You lost! Game over :(";
 
             // Separated take damage logic (afterMove) after both entities moved for better sense of damaging
-            if (enemy != null)
+            if (enemy != null && moveCount > 3)
                 enemy.afterMove(map, player);
             player.afterMove(map, enemy);
 
@@ -423,7 +424,7 @@ namespace FSM_AI
 
         public void afterMove(string[,] map, Enemy enemy)
         {
-            if (enemy != null && detectEntity(map, enemy, 3) == 2 && justAttacked)
+            if (justAttacked && enemy != null && detectEntity(map, enemy, 3) == 2)
             {
                 justAttacked = false;
                 enemy.takeDamage();
@@ -499,7 +500,7 @@ namespace FSM_AI
         State[,] table = new State[,]
         {
             {State.Idle,        State.Idle,         State.Idle,         State.Dead},
-            {State.Idle,        State.Pursuing,     State.Pursuing,     State.Dead},
+            {State.Idle,        State.Pursuing,     State.Attacking,    State.Dead},
             {State.Idle,        State.Pursuing,     State.Attacking,    State.Dead},
             {State.Pursuing,    State.Pursuing,     State.Attacking,    State.Dead},
             {State.Dead,        State.Dead,         State.Dead,         State.Dead}
@@ -532,6 +533,8 @@ namespace FSM_AI
 
         public void makeAction(string[,] map, Player player)
         {
+            if (state == State.Dead) return;
+
             Random rand = new Random();
 
             changeState(map, player);
@@ -576,7 +579,7 @@ namespace FSM_AI
         }
         public void afterMove(string[,] map, Player player)
         {
-            if (detectEntity(map, player, 2) == 2 && state == State.Attacking)
+            if ( state == State.Attacking && detectEntity(map, player, 2) == 2 )
             {
                 player.takeDamage();
             }
