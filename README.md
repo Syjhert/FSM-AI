@@ -19,7 +19,7 @@ Other Information:
 - The project is coded in C# Windows Form in Visual Studio.
 - The arena is made using DataGridView and for each turn (or other specific instances) the game clears the content of the grid and replaces it with new content.
 - The form shows the enemy's state after the result of the previous turn.
-- The game's update function order is: enemy state change > enemy move > player move > game-over screen check > enemy damage check > player damage check
+- The game's update function order is: enemy state change > enemy move > game-over screen check > player move > enemy damage check > player damage check
 - The enemy's state changes first per turn but the damage check happens last. This results in the enemy making a move before it has the Dead state despite having zero health on that turn.
 - The form has a checkbox in the bottom left to show the enemy Line of Sight (detection range for Pursuing State).
 
