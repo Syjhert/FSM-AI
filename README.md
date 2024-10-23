@@ -1,4 +1,4 @@
-Application of DFA
+# Application of DFA
 
 This project is a strategic turn-based game taking place on a dynamic grid. The player navigates through the arena filled with walls while trying to outsmart an enemy AI.
 
