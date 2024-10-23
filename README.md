@@ -22,3 +22,4 @@ Other Information:
 - The game's update function order is: enemy state change > enemy move > player move > game-over screen check > enemy damage check > player damage check
 - The enemy's state changes first per turn but the damage check happens last. This results in the enemy making a move before it has the Dead state despite having zero health on that turn.
 - The form has a checkbox in the bottom left to show the enemy Line of Sight (detection range for Pursuing State).
+![Automata Application DFA](https://github.com/user-attachments/assets/8a87e539-f576-40c0-854f-dc7552681f3f)
