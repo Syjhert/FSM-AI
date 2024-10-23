@@ -40,6 +40,7 @@
             reset_button = new Button();
             player_health_label = new Label();
             enemy_health_label = new Label();
+            LoS_checkbox = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -52,6 +53,7 @@
             dataGridView1.RowHeadersWidth = 51;
             dataGridView1.Size = new Size(969, 518);
             dataGridView1.TabIndex = 0;
+            dataGridView1.CellContentClick += dataGridView1_CellContentClick;
             // 
             // up_button
             // 
@@ -125,7 +127,7 @@
             // gameover_label
             // 
             gameover_label.AutoSize = true;
-            gameover_label.Location = new Point(1018, 210);
+            gameover_label.Location = new Point(1023, 255);
             gameover_label.Name = "gameover_label";
             gameover_label.Size = new Size(0, 20);
             gameover_label.TabIndex = 8;
@@ -160,11 +162,23 @@
             enemy_health_label.Text = "Enemy Health:";
             enemy_health_label.Click += label3_Click;
             // 
+            // LoS_checkbox
+            // 
+            LoS_checkbox.AutoSize = true;
+            LoS_checkbox.Location = new Point(16, 540);
+            LoS_checkbox.Name = "LoS_checkbox";
+            LoS_checkbox.Size = new Size(154, 24);
+            LoS_checkbox.TabIndex = 12;
+            LoS_checkbox.Text = "Show Line of Sight";
+            LoS_checkbox.UseVisualStyleBackColor = true;
+            LoS_checkbox.CheckedChanged += checkBox1_CheckedChanged;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1204, 566);
+            Controls.Add(LoS_checkbox);
             Controls.Add(enemy_health_label);
             Controls.Add(player_health_label);
             Controls.Add(reset_button);
@@ -199,5 +213,6 @@
         private Button reset_button;
         private Label player_health_label;
         private Label enemy_health_label;
+        private CheckBox LoS_checkbox;
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.CodeDom;
 using System.Numerics;
+using static FSM_AI.Entity;
 
 namespace FSM_AI
 {
@@ -15,7 +16,11 @@ namespace FSM_AI
         public Form1()
         {
             InitializeComponent();
+            initializeGame();
+        }
 
+        private void initializeGame()
+        {
             map = new string[,]
             {
                 {"", "", "", "", "", "", "", "", "", ""},
@@ -38,13 +43,13 @@ namespace FSM_AI
             height = map.GetLength(0);
             width = map.GetLength(1);
             moveCount = 0;
-
             generateWalls();
-
+            enemy = null;
             player = initializePlayer();
-
             renderGridView();
 
+            state_label.Text = "Not yet spawned";
+            gameover_label.Text = "";
             player_health_label.Text = "Your Health: " + player.health;
             enemy_health_label.Text = "Enemy Health:";
         }
@@ -73,7 +78,7 @@ namespace FSM_AI
                 );
             } while (map[initialCoords.y, initialCoords.x] == "X");
 
-            return new Enemy(initialCoords, 5);
+            return new Enemy(initialCoords, 5, LoS_checkbox.Checked);
         }
 
         private void generateWalls()
@@ -175,38 +180,24 @@ namespace FSM_AI
         }
         private void up_button_Click(object sender, EventArgs e)
         {
-            playerMove(1);
+            updateGame(Player.Action.Up);
         }
 
         private void right_button_Click(object sender, EventArgs e)
         {
-            playerMove(2);
+            updateGame(Player.Action.Right);
         }
 
         private void down_button_Click(object sender, EventArgs e)
         {
-            playerMove(3);
+            updateGame(Player.Action.Down);
         }
         private void left_button_Click(object sender, EventArgs e)
         {
-            playerMove(4);
+            updateGame(Player.Action.Left);
         }
 
-        private void playerMove(int move)
-        {
-            if (player.health > 0)
-            {
-                player.move(map, move);
-                updateGame();
-            }
-            else
-            {
-                gameover_label.Text = "You lost! Game over :(";
-            }
-
-        }
-
-        private void updateGame()
+        private void updateGame(Player.Action action)
         {
             moveCount++;
 
@@ -217,11 +208,24 @@ namespace FSM_AI
 
             if (enemy != null)
             {
+                enemy.makeAction(map, player);
                 state_label.Text = enemy.getState();
-                enemy.makeMove(map, player);
-                enemy_health_label.Text = "Enemy Health: " + enemy.health;
             }
+            if (player.health > 0)
+                player.makeAction(map, action);
+            else
+                gameover_label.Text = "You lost! Game over :(";
+
+            // Separated take damage logic (afterMove) after both entities moved for better sense of damaging
+            if (enemy != null)
+                enemy.afterMove(map, player);
+            player.afterMove(map, enemy);
+
+            if (enemy != null)
+                enemy_health_label.Text = "Enemy Health: " + enemy.health;
+
             player_health_label.Text = "Your Health: " + player.health;
+
 
             renderGridView();
             cleanMap();
@@ -229,8 +233,7 @@ namespace FSM_AI
 
         private void attack_button_Click(object sender, EventArgs e)
         {
-            player.attack(map, enemy);
-            updateGame();
+            updateGame(Player.Action.Attack);
         }
 
 
@@ -249,34 +252,7 @@ namespace FSM_AI
 
         private void reset_button_Click(object sender, EventArgs e)
         {
-            map = new string[,]
-            {
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-                {"", "", "", "", "", "", "", "", "", ""},
-            };
-            moveCount = 0;
-            generateWalls();
-            enemy = null;
-            player = initializePlayer();
-            renderGridView();
-
-            state_label.Text = "Not yet spawned";
-            gameover_label.Text = "";
-            player_health_label.Text = "Your Health: " + player.health;
-            enemy_health_label.Text = "Enemy Health:";
+            initializeGame();
         }
 
         private void label2_Click(object sender, EventArgs e)
@@ -287,6 +263,22 @@ namespace FSM_AI
         private void label3_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if ( enemy != null)
+            {
+                enemy.showLineOfSight = LoS_checkbox.Checked;
+                enemy.drawLineOfSight(map, player);
+            }
+            renderGridView();
+            cleanMap();
         }
     }
 
@@ -300,45 +292,59 @@ namespace FSM_AI
             this.y = y;
         }
     }
+
     class Entity
     {
         public int health;
         public Coord coord;
+        public enum Action
+        {
+            Nothing,
+            Up,
+            Right,
+            Down,
+            Left,
+            Attack
+        }
         public Entity(Coord coord, int health)
         {
             this.coord = coord;
             this.health = health;
         }
 
-        public void move(string[,] map, int move)
+        public void move(string[,] map, Action action)
         {
-            switch (move)
+            //if the chosen move (by player or random generated by enemy is a wall, they stay in place
+            switch (action)
             {
-                case 0:
+                case Action.Nothing:
                     break;
-                case 1:
-                    if (coord.y - 1 >= 0 && map[coord.y - 1, coord.x] != "X")
+                case Action.Up:
+                    if (coord.y - 1 >= 0 && !map[coord.y - 1, coord.x].Contains('X'))
                     {
                         coord.y--;
                     }
                     break;
-                case 2:
-                    if (coord.x + 1 <= map.GetLength(1) - 1 && map[coord.y, coord.x + 1] != "X")
+                case Action.Right:
+                    if (coord.x + 1 <= map.GetLength(1) - 1 && !map[coord.y, coord.x + 1].Contains('X'))
                     {
                         coord.x++;
                     }
                     break;
-                case 3:
-                    if (coord.y + 1 <= map.GetLength(0) - 1 && map[coord.y + 1, coord.x] != "X")
+                case Action.Down:
+                    if (coord.y + 1 <= map.GetLength(0) - 1 && !map[coord.y + 1, coord.x].Contains('X'))
                     {
                         coord.y++;
                     }
                     break;
-                case 4:
-                    if (coord.x - 1 >= 0 && map[coord.y, coord.x - 1] != "X")
+                case Action.Left:
+                    if (coord.x - 1 >= 0 && !map[coord.y, coord.x - 1].Contains('X'))
                     {
                         coord.x--;
                     }
+                    break;
+                case Action.Attack:
+                    System.Diagnostics.Debug.WriteLine("Attack Action should not be in the move() method");
                     break;
             }
         }
@@ -348,14 +354,19 @@ namespace FSM_AI
         }
 
         public int detectEntity(string[,] map, Entity entity, int attackRangeCost)
-        {//0 - detected nothing, 1 - detected entity, 2 - entity in range for attack
+        {// returns:
+         // 0 - detected nothing, 1 - detected entity, 2 - entity in range for attack
+         // all return states is used by Enemy
+         // Player only use 2 - entity in range for attack for attack damage check
+
             int xDir = ((entity.coord.x > coord.x) ? 1 : -1);
             int yDir = ((entity.coord.y > coord.y) ? 1 : -1);
 
             Coord curr = new Coord(coord.x, coord.y);
 
-            int cost = 0;
-            while (cost < 8
+            int attackRange = 0;
+            int detectRange = 0;
+            while (detectRange < 8
             )
             {
                 if (entity.coord.x == curr.x)
@@ -369,20 +380,21 @@ namespace FSM_AI
 
                 curr.x += xDir;
                 curr.y += yDir;
-                cost += (Math.Abs(xDir) + Math.Abs(yDir));
+                attackRange += (Math.Abs(xDir) + Math.Abs(yDir));
                 if (map[curr.y, curr.x].Contains('X')){
                     break;
                 }
 
                 if (entity.coord.x == curr.x && entity.coord.y == curr.y)
                 {
-                    if (cost <= attackRangeCost)
+                    if (attackRange <= attackRangeCost)
                     {
-                        System.Diagnostics.Debug.WriteLine("Cost: " + cost + " out of " + attackRangeCost);
+                        //System.Diagnostics.Debug.WriteLine("AttackRange: " + attackRange + " out of " + attackRangeCost);
                         return 2;
                     }
                     return 1;
                 }
+                detectRange++;
             }
 
             return 0;
@@ -391,11 +403,34 @@ namespace FSM_AI
 
     class Player : Entity
     {
+        public bool justAttacked;
         public Player(Coord coord, int health) : base(coord, health)
         {
+            justAttacked = false;
         }
 
-        public void attack(string[,] map, Enemy enemy)
+        public void makeAction(string[,] map, Action action)
+        {
+            if (action == Action.Attack)
+            {
+                attack(map);
+            }
+            else
+            {
+                move(map, action);
+            }
+        }
+
+        public void afterMove(string[,] map, Enemy enemy)
+        {
+            if (enemy != null && detectEntity(map, enemy, 3) == 2 && justAttacked)
+            {
+                justAttacked = false;
+                enemy.takeDamage();
+            }
+        }
+
+        public void attack(string[,] map)
         {
             for (int i = 1; i < 4; i++)
             {
@@ -431,10 +466,7 @@ namespace FSM_AI
 
             }
 
-            if (detectEntity(map, enemy, 3) == 2)
-            {
-                enemy.takeDamage();
-            }
+            justAttacked = true;
         }
 
         private void addSides(string[,] map, int i, Coord curr ,int xDir, int yDir)
@@ -455,54 +487,65 @@ namespace FSM_AI
 
     class Enemy : Entity
     {
-
-        int state;
-        int[,] table = new int[,]
+        enum State
         {
-            {1, 1, 1, 4},
-            {1, 2, 2, 4},
-            {1, 2, 3, 4},
-            {2, 2, 3, 4},
-            {4, 4, 4, 4}
+            Spawned,
+            Idle,
+            Pursuing,
+            Attacking,
+            Dead
         };
-        public Enemy(Coord coord, int health) : base(coord, health)
+        State state;
+        State[,] table = new State[,]
         {
-            state = 0;
+            {State.Idle,        State.Idle,         State.Idle,         State.Dead},
+            {State.Idle,        State.Pursuing,     State.Pursuing,     State.Dead},
+            {State.Idle,        State.Pursuing,     State.Attacking,    State.Dead},
+            {State.Pursuing,    State.Pursuing,     State.Attacking,    State.Dead},
+            {State.Dead,        State.Dead,         State.Dead,         State.Dead}
+        };
+        public bool showLineOfSight;
+        public Enemy(Coord coord, int health, bool showLineofSight) : base(coord, health)
+        {
+            state = State.Spawned;
+            this.showLineOfSight = showLineofSight;
         }
 
         public string getState()
         {
             switch (state)
             {
-                case 0:
+                case State.Spawned:
                     return "Spawned";
-                case 1:
+                case State.Idle:
                     return "Idle";
-                case 2:
+                case State.Pursuing:
                     return "Pursuing";
-                case 3:
+                case State.Attacking:
                     return "Attacking";
-                case 4:
+                case State.Dead:
                     return "Dead";
                 default:
                     return "IDK";
             }
         }
 
-        public void makeMove(string[,] map, Player player)
+        public void makeAction(string[,] map, Player player)
         {
             Random rand = new Random();
 
+            changeState(map, player);
+
             switch (state)
             {
-                case 1:
-                    move(map, rand.Next(5));
-                    //drawLineOfSight(map, player);
+                case State.Idle:
+                    move(map, (Action) rand.Next(5));
                     break;
-                case 2:
+                case State.Pursuing:
                     int moveRandom = rand.Next(3);
                     if (moveRandom == 0)
                     {
+                        //move in x-axis first
                         if (player.coord.x > coord.x
                         && !map[coord.y, coord.x + 1].Contains('X')) coord.x += 1;
                         else if (player.coord.x < coord.x
@@ -514,6 +557,7 @@ namespace FSM_AI
                     }
                     else if (moveRandom == 1)
                     {
+                        //move in y-axis first
                         if (player.coord.y > coord.y
                             && !map[coord.y + 1, coord.x].Contains('X')) coord.y += 1;
                         else if (player.coord.y < coord.y
@@ -523,30 +567,44 @@ namespace FSM_AI
                         else if (player.coord.x < coord.x
                             && !map[coord.y, coord.x - 1].Contains('X')) coord.x -= 1;
                     }
-                    
+                    //else not move (stumble) to give player chances to get away
                     break;
-                case 3:
+                case State.Attacking:
                     attack(map, player);
                     break;
             }
+        }
+        public void afterMove(string[,] map, Player player)
+        {
+            if (detectEntity(map, player, 2) == 2 && state == State.Attacking)
+            {
+                player.takeDamage();
+            }
+
+            drawLineOfSight(map, player);
+
+        }
+        public void changeState(string[,] map, Player player)
+        {
             int input = health <= 0 ? 3 : detectEntity(map, player, 2);
-            System.Diagnostics.Debug.WriteLine("State:" + getState() + " " + input);
-            state = table[state, input];
+            //System.Diagnostics.Debug.WriteLine("State:" + getState() + "(" + (int)state + ") " + input);
+            state = table[(int)state, input];
         }
 
         public void drawLineOfSight(string[,] map, Player player)
         {
+            // idk if this is an algorithm
+            // goes diagonal first then if same x or y axis, go straight
+            if (!showLineOfSight) return;
+
             int xDir = ((player.coord.x > coord.x) ? 1 : -1);
             int yDir = ((player.coord.y > coord.y) ? 1 : -1);
 
             Coord curr = new Coord(coord.x, coord.y);
-
-            while ((player.coord.x != curr.x || player.coord.y != curr.y) && 
-                !(curr.x >= map.GetLength(1) && curr.y > map.GetLength(0) && curr.x < 0 && curr.y < 0)
-            )
+            int range = 8;
+            int i = 0;
+            while ((player.coord.x != curr.x || player.coord.y != curr.y) && i < range)
             {
-                map[curr.y, curr.x] += "P";
-
                 if (player.coord.x == curr.x)
                 {
                     xDir = 0;
@@ -558,6 +616,12 @@ namespace FSM_AI
 
                 curr.x += xDir;
                 curr.y += yDir;
+                if (map[curr.y, curr.x].Contains('X'))
+                {
+                    break;
+                }
+                map[curr.y, curr.x] += "P";
+                i++;
             }
 
         }
@@ -595,11 +659,6 @@ namespace FSM_AI
                 }
                 addSides(map, i, new Coord(coord.x, coord.y - i), 1, 1);
 
-            }
-
-            if (detectEntity(map, player, 2) == 2)
-            {
-                player.takeDamage();
             }
         }
 
