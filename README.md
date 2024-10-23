@@ -23,5 +23,5 @@ Other Information:
 - The enemy's state changes first per turn but the damage check happens last. This results in the enemy making a move before it has the Dead state despite having zero health on that turn.
 - The form has a checkbox in the bottom left to show the enemy Line of Sight (detection range for Pursuing State).
 
-Deterministic Finite Automaton (DFA)
+Deterministic Finite Automaton (DFA):
 ![Automata Application DFA](https://github.com/user-attachments/assets/8a87e539-f576-40c0-854f-dc7552681f3f)
